@@ -1,0 +1,2 @@
+javac -d . source_code/*.java
+java bagofwords.Main
