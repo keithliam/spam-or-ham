@@ -22,22 +22,24 @@ public class SpamFilter{
 	private HashMap<String, Integer> bagOfHams;
 	private HashMap<String, Integer> bagOfSpams;
 	private HashMap<String, Integer> bagOfEmail;
-	private int hamSize;
-	private int spamSize;
+	private EmailIO hamIO;
+	private EmailIO spamIO;
+	private int noOfHams, noOfSpams;
+	private final static int smoothingFactor = 2;
 
 	public SpamFilter(){
-		EmailIO hamIO = new EmailIO(true);
-		EmailIO spamIO = new EmailIO(false);
-		this.bagOfHams = hamIO.getHamSpam();
-		this.bagOfSpams = spamIO.getHamSpam();
-		// hamIO.writeFile();
-		// spamIO.writeFile();
-		this.hamSize = hamIO.getWordSize();
-		this.spamSize = spamIO.getWordSize();
+		this.hamIO = new EmailIO(300, true);
+		this.spamIO = new EmailIO(300, false);
+		this.bagOfHams = this.hamIO.getHamSpam();
+		this.bagOfSpams = this.spamIO.getHamSpam();
+		this.noOfHams = this.hamIO.getNoOfEmails();
+		this.noOfSpams = this.spamIO.getNoOfEmails();
+		this.hamIO.writeFile("ham.txt");
+		this.spamIO.writeFile("spam.txt");
 	}
 
 	public void filterAll(){
-		EmailIO emailIO = new EmailIO(false);
+		EmailIO emailIO = new EmailIO(300, false);
 		String filename, hamOrSpam;
 		double emailSpamProbability;
 
@@ -53,55 +55,67 @@ public class SpamFilter{
 
 			System.out.printf(filename + "\t%s", hamOrSpam);
 			System.out.printf("\t%.32f\n", emailSpamProbability);
+			if(emailSpamProbability <= 0.50) addEmailsToHashMap(true);
+			else addEmailsToHashMap(false);
+		}
+		emailIO.writeFile("email.txt");
+	}
+
+	private void addEmailsToHashMap(boolean isHam){
+		for(String key : this.bagOfEmail.keySet()){
+			if(isHam){
+				this.noOfHams++;
+				if(this.bagOfHams.containsKey(key)){
+					this.bagOfHams.put(key, this.bagOfHams.get(key) + this.bagOfEmail.get(key));
+				} else {
+					this.bagOfHams.put(key, this.bagOfEmail.get(key));
+				}
+			} else if(!isHam){
+				this.noOfSpams++;
+				if(this.bagOfSpams.containsKey(key)){
+					this.bagOfSpams.put(key, this.bagOfSpams.get(key) + this.bagOfEmail.get(key));
+				} else {
+					this.bagOfSpams.put(key, this.bagOfEmail.get(key));
+				}
+			}
 		}
 	}
 
 	private double getEmailSpamProbability(){
-		double spamProbability = this.getSpamProbability();
-		double hamProbability = this.getHamProbability();
-		double numerator = spamProbability;
-		double messageSpamProbabality = 1;
-		double messageHamProbabality = 1;
+		double messageSpamProbability = 1;
+		double messageHamProbability = 1;
 
 		for(String key : this.bagOfEmail.keySet()){
-																							// System.out.printf("KEY: " + key + "\n\tNUM: " + numerator + "\n\t\tMUL: %.32f\n", this.getWordSpamProbability(key));
-			numerator = numerator * this.getWordSpamProbability(key);
-																							// System.out.printf("\t\t\t\tNUM: %.32f", numerator);
-																							// System.out.printf("\n\t\t\t\t\t\tMH: %.32f", messageHamProbabality);
-																							// System.out.printf("\n\t\t\t\t\t\t\t\tMS: %.32f\n", messageSpamProbabality);
-
-			messageSpamProbabality = messageSpamProbabality * this.getWordSpamProbability(key);
-			messageHamProbabality = messageHamProbabality * this.getWordHamProbability(key);
-			if(numerator == 0) return 0;
+			messageSpamProbability = messageSpamProbability * this.getWordSpamProbability(key);
+			messageHamProbability = messageHamProbability * this.getWordHamProbability(key);
 		}
 
-		double denominator = (messageSpamProbabality * spamProbability) + (messageHamProbabality * hamProbability);
-		if(denominator == 0) return 0;
+		double spamProbability = this.getSpamProbability();
+		double hamProbability = this.getHamProbability();
 
-		System.out.println("dNUM: " + numerator + "\tDEN: " + denominator + "\tRES: " + ((double) numerator/denominator));
-
+		double numerator = messageSpamProbability * spamProbability;
+		double denominator;
+		if(messageHamProbability == 0) return 1;	// floating point too small
+		else denominator = numerator + (messageHamProbability * hamProbability);
 		return (double) numerator / denominator;
 	}
 
 	private double getSpamProbability(){
-		// System.out.println(this.bagOfSpams.size() + " and " + this.bagOfHams.size());
-		// return (double) this.bagOfSpams.size() / (this.bagOfSpams.size() + this.bagOfHams.size());
-		return (double) 1 / 2;
+		return (double) (this.noOfSpams + this.smoothingFactor) / ((this.noOfHams + this.noOfSpams) + (2 * this.smoothingFactor));
 	}
 
 	private double getHamProbability(){
-		// return (double) this.bagOfHams.size() / (this.bagOfSpams.size() + this.bagOfHams.size());
-		return (double) 1 / 2;
+		return (double) (this.noOfHams + this.smoothingFactor) / ((this.noOfHams + this.noOfSpams) + (2 * this.smoothingFactor));
 	}
 
 	private double getWordSpamProbability(String key){
-		if(!this.bagOfSpams.containsKey(key)) return 0;
-		return (double) this.bagOfSpams.get(key) / this.spamSize;
+		if(!this.bagOfSpams.containsKey(key)) return (double) this.smoothingFactor / (this.spamIO.getNoOfWords() + (this.smoothingFactor * this.spamIO.getDicSize()));
+		return (double) (this.bagOfSpams.get(key) + this.smoothingFactor) / (this.spamIO.getNoOfWords() + (this.smoothingFactor * this.spamIO.getDicSize()));
 	}
 
 	private double getWordHamProbability(String key){
-		if(!this.bagOfHams.containsKey(key)) return 0;
-		return (double) this.bagOfHams.get(key) / this.hamSize;
+		if(!this.bagOfHams.containsKey(key)) return (double) this.smoothingFactor / (this.hamIO.getNoOfWords() + (this.smoothingFactor * this.hamIO.getDicSize()));
+		return (double) (this.bagOfHams.get(key) + this.smoothingFactor) / (this.hamIO.getNoOfWords() + (this.smoothingFactor * this.hamIO.getDicSize()));
 	}
 }
 
