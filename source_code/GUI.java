@@ -25,9 +25,12 @@ public class GUI {
 	private final static int SPAM = 1;
 	private final static int HAM = 2;
 	private final static int CLASSIFY = 3;
+	private boolean changedSpamFolder, changedHamFolder;
 
 	public GUI(SpamFilter filter){
 		this.filter = filter;
+		this.changedSpamFolder = false;
+		this.changedHamFolder = false;
 
 		JFrame frame = new JFrame();
 		frame.setTitle("Solution");
@@ -130,11 +133,13 @@ public class GUI {
 		spamButton.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				thisGUI.chooseFolder(thisGUI.SPAM);
+				thisGUI.changedSpamFolder = true;
 			}
 		});
 		hamButton.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				thisGUI.chooseFolder(thisGUI.HAM);
+				thisGUI.changedHamFolder = true;
 			}
 		});
 		classifyButton.addActionListener(new ActionListener(){
@@ -146,8 +151,13 @@ public class GUI {
 			public void actionPerformed(ActionEvent e){
 				if(thisGUI.spamPath != null && thisGUI.hamPath != null && thisGUI.classifyPath != null){
 					thisGUI.errorText.setText("");
-					thisGUI.filter.filter(thisGUI.spamPath, thisGUI.hamPath, thisGUI.classifyPath);
+					if(!thisGUI.changedSpamFolder && !thisGUI.changedHamFolder) thisGUI.filter.filter(null, null, thisGUI.classifyPath);
+					else if(!thisGUI.changedHamFolder) thisGUI.filter.filter(thisGUI.spamPath, null, thisGUI.classifyPath);
+					else if(!thisGUI.changedSpamFolder) thisGUI.filter.filter(null, thisGUI.hamPath, thisGUI.classifyPath);
+					else thisGUI.filter.filter(thisGUI.spamPath, thisGUI.hamPath, thisGUI.classifyPath);
 					thisGUI.updateWindow();
+					thisGUI.changedSpamFolder = false;
+					thisGUI.changedHamFolder = false;
 				} else {
 					if(thisGUI.spamPath == null) thisGUI.errorText.setText("Please select a Spam Folder.");
 					else if(thisGUI.hamPath == null) thisGUI.errorText.setText("Please select a Ham Folder.");
