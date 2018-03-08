@@ -131,15 +131,15 @@ public class SpamFilter {
 		double spamProbability = this.getSpamProbability();
 		double hamProbability = this.getHamProbability();
 		double numerator = spamProbability;
-		double denominator = 0;
+		double denominator = hamProbability;
 
 		for(String key : this.bagOfEmail.keySet()){
-			// System.out.println(">>>>>>>>>>>" + this.getWordSpamProbability(key));
 			numerator *= this.getWordSpamProbability(key);
-			denominator += (this.getWordSpamProbability(key) * spamProbability) + (this.getWordHamProbability(key) * hamProbability);
+			denominator *= this.getWordHamProbability(key);
 		}
 
-		return (double) numerator / denominator;
+		if(denominator == 0) return 1;		// floating-point too small
+		return (double) numerator / (numerator + denominator);
 	}
 
 	private double getSpamProbability(){
