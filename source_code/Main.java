@@ -2,7 +2,7 @@ package bagofwords;
 
 public class Main{
 	public static void main(String[] args){
-		SpamFilter spam = new SpamFilter();
-		spam.filterAll();
+		SpamFilter filter = new SpamFilter(1);
+		GUI window = new GUI(filter);
 	}
 }

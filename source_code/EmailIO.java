@@ -22,40 +22,42 @@ public class EmailIO{
 	private int wordSize, noOfEmails;
 	private boolean isHam;
 	private HashMap<String, Integer> bagOfWords = new HashMap<String, Integer>();
+	private File path;
 
-	public EmailIO(int num, boolean isHam){
+	public EmailIO(File path, boolean isHam){
+		this.path = path;
 		this.isHam = isHam;
-		this.noOfEmails = num;
+		this.noOfEmails = path.list().length;
+		this.wordSize = 0;
 	}
 
 	public HashMap<String, Integer> getHamSpam(){
 		String filename;
 		String file = new String();
 		String filenumber;
+		boolean error;
+		int j = 0;
 
 		if(this.isHam) System.out.println("Eating Hams:");
 		else System.out.println("Eating Spams:");
 
-		for(int j = 1; j <= this.noOfEmails; j++){
-			if(j < 10) filenumber = "00" + Integer.toString(j);
-			else if(j < 100) filenumber = "0" + Integer.toString(j);
-			else filenumber = Integer.toString(j);
-			
-			filename = (this.isHam)? ("./ham/" + filenumber) : ("./spam/" + filenumber);
-
+		for(String filepath : this.path.list()){
+			j++;
+			error = true;
 			try{
-				BufferedReader reader = new BufferedReader(new FileReader(filename));
+				BufferedReader reader = new BufferedReader(new FileReader(this.path + "/" + filepath));
 				String line = new String();
 				while((line = reader.readLine()) != null) {
 					file = file.concat(line + " ");
 				}
+				error = false;
 			} catch(FileNotFoundException e){
-				System.out.println("File " + filename + " not found");
+				System.out.println("\nFile " + this.path + filepath + " not found");
 			} catch(Exception e){
 				System.out.println(e.getMessage());
 			}
 
-			this.extractWords(file);
+			if(!error) this.extractWords(file);
 
 			if(j != 1) this.clear(30);
 			this.loadingBar(j, 30);
@@ -98,7 +100,7 @@ public class EmailIO{
 		}
 	}
 
-	private void loadingBar(int num, int length){
+	public void loadingBar(int num, int length){
 		int i;
 		int limit = (num * (length - 2)) / this.noOfEmails;
 		float percent = (float) (num * 100) / this.noOfEmails;
@@ -112,7 +114,7 @@ public class EmailIO{
 		System.out.print("%");
 	}
 
-	private void clear(int length){
+	public void clear(int length){
 		int i;
 		for(i = 0; i < (length + 7); i++){
 			System.out.print("\b");
