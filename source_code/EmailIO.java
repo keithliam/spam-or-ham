@@ -39,7 +39,7 @@ public class EmailIO{
 		int j = 0;
 
 		if(this.isHam) System.out.println("Eating Hams:");
-		else System.out.println("Eating Spams:");
+		else System.out.println("Cooking Spams:");
 
 		for(String filepath : this.path.list()){
 			j++;
