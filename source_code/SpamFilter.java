@@ -52,10 +52,15 @@ public class SpamFilter {
 	}
 
 	public void filterAll(File classifyPath){
+		String text = new String();
+		String spamHam = new String();
+		String probability = new String();
 		double emailSpamProbability;
 		int i = 0;
 
 		this.emailData = new String[classifyPath.list().length][3];
+
+
 
 		System.out.println("Classifying Emails:");
 		for(String file : classifyPath.list()){
@@ -69,10 +74,14 @@ public class SpamFilter {
 			}
 
 			emailSpamProbability = this.getEmailSpamProbability();
+			spamHam = (emailSpamProbability >= this.threshold)? "SPAM" : "HAM\t";
+			probability = (emailSpamProbability >= 0.01 || emailSpamProbability == 0)? String.format("%1.2f", emailSpamProbability) : String.format("%1.2e", emailSpamProbability);
 
 			this.emailData[i][0] = file;
-			this.emailData[i][1] = (emailSpamProbability >= this.threshold)? "SPAM" : "HAM";
-			this.emailData[i][2] = (emailSpamProbability >= 0.01 || emailSpamProbability == 0)? String.format("%1.2f", emailSpamProbability) : String.format("%1.2e", emailSpamProbability);
+			this.emailData[i][1] = spamHam;
+			this.emailData[i][2] = probability;
+
+			text = text + file + "\t" + spamHam + "\t" + probability + "\n";
 
 			i++;
 			if(i != 1) this.emailIO.clear(30);
@@ -84,6 +93,18 @@ public class SpamFilter {
 			// else addEmailsToHashMap(false);
 		}
 		System.out.println();
+
+		this.writeFile(text, "classify.txt");
+	}
+
+	private void writeFile(String text, String filename){
+		try{
+			PrintWriter writer = new PrintWriter(filename, "UTF-8");
+			writer.println(text);
+			writer.close();
+		} catch(Exception e){
+			System.out.println(e.getMessage());
+		}
 	}
 
 	private void addEmailsToHashMap(boolean isHam){
