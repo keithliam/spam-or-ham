@@ -26,31 +26,32 @@ public class SpamFilter {
 	private int noOfUnknownSpam, noOfUnknownHam;
 	private int noOfHams, noOfSpams;
 	private int smoothingFactor;
+	private float threshold;
 	private String[][] emailData;
 
-	public SpamFilter(int smoothingFactor){
+	public SpamFilter(int smoothingFactor, float threshold){
 		this.smoothingFactor = smoothingFactor;
+		this.threshold = (float) threshold / 100;
 	}
 
 	public void filter(File spamPath, File hamPath, File classifyPath){
-		if(hamPath != null){
-			this.hamIO = new EmailIO(hamPath, true);
-			this.bagOfHams = this.hamIO.getHamSpam();
-			this.noOfHams = this.hamIO.getNoOfEmails();
-			this.hamIO.writeFile("ham.txt");
-		}
 		if(spamPath != null){
 			this.spamIO = new EmailIO(spamPath, false);
 			this.bagOfSpams = this.spamIO.getHamSpam();
 			this.noOfSpams = this.spamIO.getNoOfEmails();
 			this.spamIO.writeFile("spam.txt");
 		}
+		if(hamPath != null){
+			this.hamIO = new EmailIO(hamPath, true);
+			this.bagOfHams = this.hamIO.getHamSpam();
+			this.noOfHams = this.hamIO.getNoOfEmails();
+			this.hamIO.writeFile("ham.txt");
+		}
 		this.emailIO = new EmailIO(classifyPath, false);
 		this.filterAll(classifyPath);
 	}
 
 	public void filterAll(File classifyPath){
-		String filename, hamOrSpam;
 		double emailSpamProbability;
 		int i = 0;
 
@@ -68,11 +69,10 @@ public class SpamFilter {
 			}
 
 			emailSpamProbability = this.getEmailSpamProbability();
-			hamOrSpam = (emailSpamProbability <= 0.50)? "HAM" : "SPAM";
 
 			this.emailData[i][0] = file;
-			this.emailData[i][1] = hamOrSpam;
-			this.emailData[i][2] = Float.toString((float) emailSpamProbability);
+			this.emailData[i][1] = (emailSpamProbability >= this.threshold)? "SPAM" : "HAM";
+			this.emailData[i][2] = (emailSpamProbability >= 0.01 || emailSpamProbability == 0)? String.format("%1.2f", emailSpamProbability) : String.format("%1.2e", emailSpamProbability);
 
 			i++;
 			if(i != 1) this.emailIO.clear(30);
@@ -143,14 +143,14 @@ public class SpamFilter {
 		return (double) (this.bagOfHams.get(key) + this.smoothingFactor) / (this.hamIO.getNoOfWords() + (this.smoothingFactor * this.noOfUnknownHam));
 	}
 
-	public int getEmailDicSize(){
+	public int getTotalDicSize(){
 		if(this.emailIO == null) return 0;
-		else return this.emailIO.getDicSize();
+		else return this.spamIO.getDicSize() + this.hamIO.getDicSize();
 	}
 
-	public int getEmailNoOfWords(){
+	public int getTotalNoOfWords(){
 		if(this.emailIO == null) return 0;
-		else return this.emailIO.getNoOfWords();
+		else return this.spamIO.getNoOfWords() + this.hamIO.getNoOfWords();
 	}
 
 	public int getHamNoOfWords(){

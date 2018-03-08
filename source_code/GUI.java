@@ -20,7 +20,7 @@ public class GUI {
 	private File spamPath;
 	private File hamPath;
 	private File classifyPath;
-	private JLabel emailDicSize, emailNoOfWords, spamNoOfWords, hamNoOfWords, errorText;
+	private JLabel totalDicSize, totalNoOfWords, spamNoOfWords, hamNoOfWords, errorText;
 	private DefaultTableModel spamModel, hamModel, classifyModel;
 	private final static int SPAM = 1;
 	private final static int HAM = 2;
@@ -35,6 +35,7 @@ public class GUI {
 		JFrame frame = new JFrame();
 		frame.setTitle("Solution");
 		frame.setPreferredSize(new Dimension(800, 600));
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setResizable(false);
 		frame.setLayout(null);
 		final Container container = frame.getContentPane();
@@ -49,42 +50,45 @@ public class GUI {
 		JButton filterButton = new JButton("Filter");
 		spamButton.setBounds(70, 30, 160, 40);
 		hamButton.setBounds(320, 30, 160, 40);
-		classifyButton.setBounds(570, 80, 160, 40);
-		filterButton.setBounds(570, 130, 160, 40);
+		classifyButton.setBounds(570, 70, 160, 40);
+		filterButton.setBounds(570, 115, 160, 40);
 		frame.add(spamButton);
 		frame.add(hamButton);
 		frame.add(classifyButton);
 		frame.add(filterButton);
 
-		JLabel emailDicSizeLabel = new JLabel("Dictionary Size:");
-		JLabel emailDicSize = new JLabel(Integer.toString(filter.getEmailDicSize()));
-		this.emailDicSize = emailDicSize;
-		emailDicSizeLabel.setBounds(500, 30, 160, 40);
-		emailDicSize.setBounds(600, 30, 160, 40);
-		frame.add(emailDicSizeLabel);
-		frame.add(emailDicSize);
+		JLabel totalDicSizeLabel = new JLabel("Dictionary Size:");
+		JLabel totalDicSize = new JLabel(Integer.toString(filter.getTotalDicSize()));
+		this.totalDicSize = totalDicSize;
+		totalDicSizeLabel.setBounds(500, 30, 160, 40);
+		totalDicSize.setBounds(600, 30, 160, 40);
+		frame.add(totalDicSizeLabel);
+		frame.add(totalDicSize);
 
-		JLabel emailNoOfWordsLabel = new JLabel("Total Words:");
-		JLabel emailNoOfWords = new JLabel(Integer.toString(filter.getEmailNoOfWords()));
+		JLabel totalNoOfWordsLabel = new JLabel("Total Words:");
+		JLabel totalNoOfWords = new JLabel(Integer.toString(filter.getTotalNoOfWords()));
 		JLabel spamNoOfWordsLabel = new JLabel("Total Words in Spam:");
 		JLabel spamNoOfWords = new JLabel(Integer.toString(filter.getSpamNoOfWords()));	
 		JLabel hamNoOfWordsLabel = new JLabel("Total Words in Ham:");
 		JLabel hamNoOfWords = new JLabel(Integer.toString(filter.getHamNoOfWords()));
-		this.emailNoOfWords = emailNoOfWords;
+		JLabel outputLabel = new JLabel("Output");
+		this.totalNoOfWords = totalNoOfWords;
 		this.spamNoOfWords = spamNoOfWords;
 		this.hamNoOfWords = hamNoOfWords;
-		emailNoOfWordsLabel.setBounds(655, 30, 160, 40);
-		emailNoOfWords.setBounds(735, 30, 160, 40);
+		totalNoOfWordsLabel.setBounds(650, 30, 160, 40);
+		totalNoOfWords.setBounds(730, 30, 160, 40);
 		spamNoOfWordsLabel.setBounds(60, 520, 160, 40);
 		spamNoOfWords.setBounds(200, 520, 160, 40);
 		hamNoOfWordsLabel.setBounds(315, 520, 160, 40);
 		hamNoOfWords.setBounds(450, 520, 160, 40);
-		frame.add(emailNoOfWordsLabel);
-		frame.add(emailNoOfWords);
+		outputLabel.setBounds(550, 150, 160, 40);
+		frame.add(totalNoOfWordsLabel);
+		frame.add(totalNoOfWords);
 		frame.add(spamNoOfWordsLabel);
 		frame.add(spamNoOfWords);
 		frame.add(hamNoOfWordsLabel);
 		frame.add(hamNoOfWords);
+		frame.add(outputLabel);
 
 		JLabel errorText = new JLabel();
 		errorText.setBounds(555, 520, 200, 40);
@@ -113,6 +117,8 @@ public class GUI {
         classifyTable.setPreferredScrollableViewportSize(new Dimension(250,400));
         spamTable.getColumnModel().getColumn(0).setPreferredWidth(130);
         hamTable.getColumnModel().getColumn(0).setPreferredWidth(130);
+        classifyTable.getColumnModel().getColumn(0).setPreferredWidth(65);
+        classifyTable.getColumnModel().getColumn(1).setPreferredWidth(45);
 		spamPanel.setBounds(50, 80, 200, 440);
 		hamPanel.setBounds(300, 80, 200, 440);
 		classifyPanel.setBounds(550, 180, 200, 340);
@@ -150,7 +156,6 @@ public class GUI {
 		filterButton.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				if(thisGUI.spamPath != null && thisGUI.hamPath != null && thisGUI.classifyPath != null){
-					thisGUI.errorText.setText("");
 					if(!thisGUI.changedSpamFolder && !thisGUI.changedHamFolder) thisGUI.filter.filter(null, null, thisGUI.classifyPath);
 					else if(!thisGUI.changedHamFolder) thisGUI.filter.filter(thisGUI.spamPath, null, thisGUI.classifyPath);
 					else if(!thisGUI.changedSpamFolder) thisGUI.filter.filter(null, thisGUI.hamPath, thisGUI.classifyPath);
@@ -158,6 +163,7 @@ public class GUI {
 					thisGUI.updateWindow();
 					thisGUI.changedSpamFolder = false;
 					thisGUI.changedHamFolder = false;
+					thisGUI.errorText.setText("");
 				} else {
 					if(thisGUI.spamPath == null) thisGUI.errorText.setText("Please select a Spam Folder.");
 					else if(thisGUI.hamPath == null) thisGUI.errorText.setText("Please select a Ham Folder.");
@@ -188,8 +194,8 @@ public class GUI {
 	}
 
 	public void updateWindow(){
-		this.emailDicSize.setText(Integer.toString(filter.getEmailDicSize()));
-		this.emailNoOfWords.setText(Integer.toString(filter.getEmailNoOfWords()));
+		this.totalDicSize.setText(Integer.toString(filter.getTotalDicSize()));
+		this.totalNoOfWords.setText(Integer.toString(filter.getTotalNoOfWords()));
 		this.spamNoOfWords.setText(Integer.toString(filter.getSpamNoOfWords()));
 		this.hamNoOfWords.setText(Integer.toString(filter.getHamNoOfWords()));
 		this.spamModel.setRowCount(0);
