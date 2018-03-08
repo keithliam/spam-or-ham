@@ -25,16 +25,16 @@ public class SpamFilter {
 	private EmailIO hamIO, spamIO, emailIO;
 	private int noOfUnknownSpam, noOfUnknownHam;
 	private int noOfHams, noOfSpams;
-	private int smoothingFactor;
+	private float smoothingFactor;
 	private float threshold;
 	private String[][] emailData;
 
-	public SpamFilter(int smoothingFactor, float threshold){
-		this.smoothingFactor = smoothingFactor;
+	public SpamFilter(float threshold){
 		this.threshold = (float) threshold / 100;
 	}
 
-	public void filter(File spamPath, File hamPath, File classifyPath){
+	public void filter(File spamPath, File hamPath, File classifyPath, float smoothingFactor){
+		this.smoothingFactor = smoothingFactor;
 		if(spamPath != null){
 			this.spamIO = new EmailIO(spamPath, false);
 			this.bagOfSpams = this.spamIO.getHamSpam();

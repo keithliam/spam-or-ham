@@ -21,6 +21,7 @@ public class GUI {
 	private File hamPath;
 	private File classifyPath;
 	private JLabel totalDicSize, totalNoOfWords, spamNoOfWords, hamNoOfWords, errorText;
+	private TextField kValue;
 	private DefaultTableModel spamModel, hamModel, classifyModel;
 	private final static int SPAM = 1;
 	private final static int HAM = 2;
@@ -51,7 +52,7 @@ public class GUI {
 		spamButton.setBounds(70, 30, 160, 40);
 		hamButton.setBounds(320, 30, 160, 40);
 		classifyButton.setBounds(570, 70, 160, 40);
-		filterButton.setBounds(570, 115, 160, 40);
+		filterButton.setBounds(655, 115, 75, 40);
 		frame.add(spamButton);
 		frame.add(hamButton);
 		frame.add(classifyButton);
@@ -132,6 +133,13 @@ public class GUI {
 		frame.add(hamPanel);
 		frame.add(classifyPanel);
 
+		JLabel kValueLabel = new JLabel("k");
+		this.kValue = new TextField();
+		kValueLabel.setBounds(580, 115, 10, 40);
+		kValue.setBounds(595, 115, 50, 40);
+		frame.add(kValueLabel);
+		frame.add(kValue);
+
 		frame.pack();
 		frame.setVisible(true);
 
@@ -155,11 +163,12 @@ public class GUI {
 		});
 		filterButton.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
-				if(thisGUI.spamPath != null && thisGUI.hamPath != null && thisGUI.classifyPath != null){
-					if(!thisGUI.changedSpamFolder && !thisGUI.changedHamFolder) thisGUI.filter.filter(null, null, thisGUI.classifyPath);
-					else if(!thisGUI.changedHamFolder) thisGUI.filter.filter(thisGUI.spamPath, null, thisGUI.classifyPath);
-					else if(!thisGUI.changedSpamFolder) thisGUI.filter.filter(null, thisGUI.hamPath, thisGUI.classifyPath);
-					else thisGUI.filter.filter(thisGUI.spamPath, thisGUI.hamPath, thisGUI.classifyPath);
+				String k = thisGUI.kValue.getText();
+				if(thisGUI.spamPath != null && thisGUI.hamPath != null && thisGUI.classifyPath != null && !k.isEmpty() && k.matches("\\d*(\\.\\d+)?")){
+					if(!thisGUI.changedSpamFolder && !thisGUI.changedHamFolder) thisGUI.filter.filter(null, null, thisGUI.classifyPath, Float.parseFloat(k));
+					else if(!thisGUI.changedHamFolder) thisGUI.filter.filter(thisGUI.spamPath, null, thisGUI.classifyPath, Float.parseFloat(k));
+					else if(!thisGUI.changedSpamFolder) thisGUI.filter.filter(null, thisGUI.hamPath, thisGUI.classifyPath, Float.parseFloat(k));
+					else thisGUI.filter.filter(thisGUI.spamPath, thisGUI.hamPath, thisGUI.classifyPath, Float.parseFloat(k));
 					thisGUI.updateWindow();
 					thisGUI.changedSpamFolder = false;
 					thisGUI.changedHamFolder = false;
@@ -168,6 +177,7 @@ public class GUI {
 					if(thisGUI.spamPath == null) thisGUI.errorText.setText("Please select a Spam Folder.");
 					else if(thisGUI.hamPath == null) thisGUI.errorText.setText("Please select a Ham Folder.");
 					else if(thisGUI.classifyPath == null) thisGUI.errorText.setText("Please select a Classify Folder.");
+					else if(k.isEmpty() || !k.matches("\\d*(\\.\\d+)?")) thisGUI.errorText.setText("Please enter a valid k value.");
 				}
 			}
 		});
