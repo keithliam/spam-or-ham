@@ -136,14 +136,11 @@ public class SpamFilter {
 		double prevNum = 0;
 		double prevDen = 0;
 		for(String key : this.bagOfEmail.keySet()){
-		System.out.println(">>>>>>>>>>" + numerator + "\t" + denominator + " * " + this.getWordHamProbability(key));
 			numerator *= this.getWordSpamProbability(key);
 			denominator *= this.getWordHamProbability(key);
 			if(this.smoothingFactor != 0 && numerator != 0 && denominator != 0){ prevNum = numerator; prevDen = denominator; }
-			// System.out.println(this.getWordHamProbability(key));
 		}
 
-		// System.out.println("\t" + numerator + " / " + denominator);
 		if(this.smoothingFactor == 0 && denominator == 0) return 0;			// word does not exist & w/o laplace
 		else if(this.smoothingFactor != 0 && numerator == 0 && denominator == 0 && prevNum >= prevDen) return 1;				// underflow
 		else if(this.smoothingFactor != 0 && numerator == 0 && denominator == 0 && prevNum < prevDen) return this.UNDERFLOW;	// underflow
