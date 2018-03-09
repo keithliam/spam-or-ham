@@ -28,6 +28,7 @@ public class SpamFilter {
 	private float smoothingFactor;
 	private float threshold;
 	private String[][] emailData;
+	private final static int UNDERFLOW = -1;
 
 	public SpamFilter(float threshold){
 		this.threshold = (float) threshold / 100;
@@ -75,7 +76,7 @@ public class SpamFilter {
 
 			emailSpamProbability = this.getEmailSpamProbability();
 			spamHam = (emailSpamProbability >= this.threshold)? "SPAM" : "HAM\t";
-			probability = (emailSpamProbability >= 0.01 || emailSpamProbability == 0)? String.format("%1.2f", emailSpamProbability) : String.format("%1.2e", emailSpamProbability);
+			probability = (emailSpamProbability == this.UNDERFLOW)? "underflow" : (emailSpamProbability >= 0.01 || emailSpamProbability == 0)? String.format("%1.2f", emailSpamProbability) : String.format("%1.2e", emailSpamProbability);
 
 			this.emailData[i][0] = file;
 			this.emailData[i][1] = spamHam;
@@ -132,13 +133,20 @@ public class SpamFilter {
 		double hamProbability = this.getHamProbability();
 		double numerator = spamProbability;
 		double denominator = hamProbability;
-
+		double prevNum = 0;
+		double prevDen = 0;
 		for(String key : this.bagOfEmail.keySet()){
+		System.out.println(">>>>>>>>>>" + numerator + "\t" + denominator + " * " + this.getWordHamProbability(key));
 			numerator *= this.getWordSpamProbability(key);
 			denominator *= this.getWordHamProbability(key);
+			if(this.smoothingFactor != 0 && numerator != 0 && denominator != 0){ prevNum = numerator; prevDen = denominator; }
+			// System.out.println(this.getWordHamProbability(key));
 		}
 
-		if(denominator == 0) return 1;		// floating-point too small
+		// System.out.println("\t" + numerator + " / " + denominator);
+		if(this.smoothingFactor == 0 && denominator == 0) return 0;			// word does not exist & w/o laplace
+		else if(this.smoothingFactor != 0 && numerator == 0 && denominator == 0 && prevNum >= prevDen) return 1;				// underflow
+		else if(this.smoothingFactor != 0 && numerator == 0 && denominator == 0 && prevNum < prevDen) return this.UNDERFLOW;	// underflow
 		return (double) numerator / (numerator + denominator);
 	}
 
