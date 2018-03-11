@@ -43,6 +43,7 @@ public class EmailIO{
 
 		for(String filepath : this.path.list()){
 			j++;
+			file = "";
 			error = true;
 			try{
 				BufferedReader reader = new BufferedReader(new FileReader(this.path + "/" + filepath));
@@ -91,8 +92,7 @@ public class EmailIO{
 		String[] words;
 
 		words = file.toLowerCase().replaceAll("[^a-zA-Z0-9\\s]", "").split("\\s+"); 
-		this.wordSize = words.length;
-
+		this.wordSize += words.length;
 
 		for(int i = 0; i < words.length; i++){
 			if(this.bagOfWords.containsKey(words[i])) this.bagOfWords.replace(words[i], this.bagOfWords.get(words[i]) + 1);
