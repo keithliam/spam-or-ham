@@ -9,6 +9,7 @@ import java.io.FileReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.lang.SecurityException;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -49,7 +50,7 @@ public class SpamFilter {
 			this.hamIO.writeFile("ham.txt");
 		}
 		this.emailIO = new EmailIO(classifyPath, false);
-		this.filterAll(classifyPath);
+		if(this.bagOfHams != null && this.bagOfSpams != null && this.bagOfEmail != null) this.filterAll(classifyPath);
 	}
 
 	public void filterAll(File classifyPath){
@@ -60,8 +61,6 @@ public class SpamFilter {
 		int i = 0;
 
 		this.emailData = new String[classifyPath.list().length][3];
-
-
 
 		System.out.println("Classifying Emails:");
 		for(String file : classifyPath.list()){
@@ -128,7 +127,27 @@ public class SpamFilter {
 		}
 	}
 
-	private double getEmailSpamProbability(){
+	public void setValues(HashMap<String, Integer> bagOfSpams, HashMap<String, Integer> bagOfHams, int noOfSpamWords, int noOfHamWords, int noOfSpams, int noOfHams){
+		this.bagOfSpams = bagOfSpams;
+		this.bagOfHams = bagOfHams;
+		this.spamIO = new EmailIO(bagOfSpams, noOfSpamWords);
+		this.hamIO = new EmailIO(bagOfHams, noOfHamWords);
+		this.noOfSpams = noOfSpams;
+		this.noOfHams = noOfHams;
+	}
+
+	public void setNewEmail(HashMap<String, Integer> bagOfEmail, float smoothingFactor){
+		this.bagOfEmail = bagOfEmail;
+		this.smoothingFactor = smoothingFactor;
+		this.noOfUnknownSpam = 0;
+		this.noOfUnknownHam = 0;
+		for(String key : this.bagOfEmail.keySet()){
+			if(!this.bagOfSpams.containsKey(key)) this.noOfUnknownSpam++;
+			if(!this.bagOfHams.containsKey(key)) this.noOfUnknownHam++;
+		}
+	}
+
+	public double getEmailSpamProbability(){
 		double spamProbability = this.getSpamProbability();
 		double hamProbability = this.getHamProbability();
 		double numerator = spamProbability;
@@ -210,6 +229,10 @@ public class SpamFilter {
 
 	public String[][] getClassifyData(){
 		return this.emailData;
+	}
+
+	public float getThreshold(){
+		return this.threshold;
 	}
 }
 

@@ -31,6 +31,11 @@ public class EmailIO{
 		this.wordSize = 0;
 	}
 
+	public EmailIO(HashMap<String, Integer> bagOfWords, int wordSize){
+		this.bagOfWords = bagOfWords;
+		this.wordSize = wordSize;
+	}
+
 	public HashMap<String, Integer> getHamSpam(){
 		String filename;
 		String file = new String();
