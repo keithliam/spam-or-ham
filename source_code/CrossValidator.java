@@ -14,6 +14,7 @@ public class CrossValidator {
 	private SpamFilter filter;
 	private float trainingPercent, tuningPercent, testPercent;
 
+	private String trainFiles = "Hams:\tSpams:", tuneFiles = "Hams:\tSpams:", testFiles = "Hams:\tSpams:";
 	private HashMap<String, Integer> bagOfHams;
 	private HashMap<String, Integer> bagOfSpams;
 	private File spamPath, hamPath;
@@ -62,7 +63,7 @@ public class CrossValidator {
 						return !(file.isHidden() || file.getName().charAt(0) == '.');
 					}
 				};
-
+				File ham, spam;
 				this.spamFiles = this.spamPath.listFiles(noHiddenFiles);
 				this.hamFiles = this.hamPath.listFiles(noHiddenFiles);
 				this.noOfFiles = this.spamFiles.length;
@@ -73,7 +74,10 @@ public class CrossValidator {
 					Arrays.fill(this.doneHams, false);
 					int limit = (int) (this.trainingPercent * this.noOfFiles) / 100;
 					for(int i = 0; i < limit; i++){
-						this.extractSpamHam(this.getContents(this.getNextFile(this.IS_SPAM)), this.getContents(this.getNextFile(this.IS_HAM)));
+						spam = this.getNextFile(this.IS_SPAM);
+						ham = this.getNextFile(this.IS_HAM);
+						this.trainFiles += "\n" + ham + "\t" + spam;
+						this.extractSpamHam(this.getContents(spam), this.getContents(ham));
 					}
 					return true;
 				} else {
@@ -94,13 +98,16 @@ public class CrossValidator {
 	public float tune(float percent, float targetAccuracy, int limit){
 		float accuracy = 0;
 		int correctFiles;
-
+		File ham, spam;
 		int noOfFiles = (int) (percent * this.noOfFiles) / 100;
 		ArrayList<HashMap<String, Integer>> spamFiles = new ArrayList<HashMap<String, Integer>>();
 		ArrayList<HashMap<String, Integer>> hamFiles = new ArrayList<HashMap<String, Integer>>();
 		for(int i = 0; i < noOfFiles; i++){
-			spamFiles.add(this.getBagOfWords(this.getContents(this.getNextFile(this.IS_SPAM))));
-			hamFiles.add(this.getBagOfWords(this.getContents(this.getNextFile(this.IS_HAM))));
+			spam = this.getNextFile(this.IS_SPAM);
+			ham = this.getNextFile(this.IS_HAM);
+			this.tuneFiles += "\n" + ham + "\t" + spam;
+			spamFiles.add(this.getBagOfWords(this.getContents(spam)));
+			hamFiles.add(this.getBagOfWords(this.getContents(ham)));
 		}
 		this.filter.setValues(this.bagOfSpams, this.bagOfHams, this.noOfSpamWords, this.noOfHamWords, this.noOfFiles, this.noOfFiles);
 		for(float smoothingFactor = 0; smoothingFactor < limit; smoothingFactor++){
@@ -125,21 +132,33 @@ public class CrossValidator {
 
 	private float test(float percent, float smoothingFactor){
 		int noOfFiles = (int) (percent * this.noOfFiles) / 100;
-		int correctFiles = 0;
+		int correctFiles = 0, correctSpams = 0;
+		System.out.print("No. of ham emails: " + noOfFiles);
+		File spam, ham;
 		ArrayList<HashMap<String, Integer>> spamFiles = new ArrayList<HashMap<String, Integer>>();
 		ArrayList<HashMap<String, Integer>> hamFiles = new ArrayList<HashMap<String, Integer>>();
 		for(int i = 0; i < noOfFiles; i++){
-			spamFiles.add(this.getBagOfWords(this.getContents(this.getNextFile(this.IS_SPAM))));
-			hamFiles.add(this.getBagOfWords(this.getContents(this.getNextFile(this.IS_HAM))));
+			spam = this.getNextFile(this.IS_SPAM);
+			ham = this.getNextFile(this.IS_HAM);
+			this.testFiles += "\n" + ham + "\t" + spam;
+			spamFiles.add(this.getBagOfWords(this.getContents(spam)));
+			hamFiles.add(this.getBagOfWords(this.getContents(ham)));
 		}
 		for(HashMap<String, Integer> bagOfWords : spamFiles){
 			this.filter.setNewEmail(bagOfWords, smoothingFactor);
 			if(this.filter.getEmailSpamProbability() >= this.threshold) correctFiles++;
 		}
+		System.out.println("\n\tNo. of correctly classified ham emails: " + correctFiles);
+		System.out.print("No. of spam emails: " + noOfFiles);
 		for(HashMap<String, Integer> bagOfWords : hamFiles){
 			this.filter.setNewEmail(bagOfWords, smoothingFactor);
-			if(this.filter.getEmailSpamProbability() < this.threshold) correctFiles++;
+			if(this.filter.getEmailSpamProbability() < this.threshold){
+				correctFiles++;
+				correctSpams++;
+			}
 		}
+		System.out.println("\n\tNo. of correctly classified spam emails: " + correctSpams);
+		System.out.println("Training subset:\n" + this.trainFiles + "\n\nTuning subset:\n" + this.tuneFiles + "\n\nTesting subset:\n" + this.testFiles);
 		return (float) (correctFiles * 100) / (noOfFiles * 2);
 	}
 
